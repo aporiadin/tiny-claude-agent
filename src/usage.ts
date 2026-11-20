@@ -28,7 +28,7 @@ export class UsageLog {
 
     const tools = stats.toolCalls ? ` (${stats.toolCalls} tool call${stats.toolCalls > 1 ? "s" : ""})` : "";
     console.log(
-      `[turn ${turn}] ${stats.stopReason}${tools} · in ${fmt(stats.inputTokens)} · out ${fmt(stats.outputTokens)} · ${secs(ms)}`,
+      `\n[turn ${turn}] ${stats.stopReason}${tools} · in ${fmt(stats.inputTokens)} · out ${fmt(stats.outputTokens)} · ${secs(ms)}`,
     );
   }
 

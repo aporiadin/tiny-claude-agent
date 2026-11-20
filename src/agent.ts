@@ -33,8 +33,8 @@ async function loop(task: string, usage: UsageLog): Promise<boolean> {
 
     // Keep the full content (including thinking blocks) in the history.
     messages.push({ role: "assistant", content: response.content });
-    printText(response);
     usage.record(turn, response, performance.now() - started);
+    printText(response);
 
     switch (response.stop_reason) {
       case "tool_use":
@@ -63,7 +63,7 @@ async function runToolCalls(response: Anthropic.Message): Promise<Anthropic.Tool
     if (block.type !== "tool_use") continue;
 
     const input = block.input as ToolInput;
-    console.log(`\n[tool] ${block.name} ${JSON.stringify(input.path ?? "")}`);
+    console.log(`[tool] ${block.name} ${JSON.stringify(input.path ?? "")}`);
 
     try {
       const output = await runTool(block.name, input);
