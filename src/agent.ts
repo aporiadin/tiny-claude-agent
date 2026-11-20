@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { MAX_TOKENS, MAX_TURNS, MODEL, SYSTEM_PROMPT } from "./config.ts";
+import { EFFORT, MAX_TOKENS, MAX_TURNS, MODEL, SYSTEM_PROMPT } from "./config.ts";
 import { runTool, toolDefinitions } from "./tools/index.ts";
 import type { ToolInput } from "./tools/types.ts";
 import { UsageLog } from "./usage.ts";
@@ -13,7 +13,7 @@ export async function runAgent(task: string): Promise<boolean> {
   try {
     return await loop(task, usage);
   } finally {
-    usage.printSummary(MODEL);
+    usage.printSummary(`${MODEL}, effort ${EFFORT}`);
   }
 }
 
@@ -25,6 +25,7 @@ async function loop(task: string, usage: UsageLog): Promise<boolean> {
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
+      output_config: { effort: EFFORT },
       system: SYSTEM_PROMPT,
       tools: toolDefinitions,
       messages,

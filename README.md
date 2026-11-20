@@ -68,6 +68,14 @@ MODEL=claude-sonnet-5-5 npm start
 MODEL=claude-haiku-5-5 npm start
 ```
 
+Effort is pinned to `medium` so every model runs at the same setting; otherwise each would use its own default. Change it with `EFFORT` (`low`, `medium`, `high`, `xhigh` or `max`):
+
+```bash
+EFFORT=high MODEL=claude-sonnet-5-5 npm start
+```
+
+The same level isn't the same amount of thinking on every model: each model calibrates its own levels. Comparing at one setting shows how the models behave when you configure them identically, which is what you'd do in practice.
+
 ## How it works
 
 1. `agent.ts` sends the task to Claude along with four tool definitions.
