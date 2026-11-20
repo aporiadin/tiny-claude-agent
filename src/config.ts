@@ -1,6 +1,7 @@
 import path from "node:path";
 
-export const MODEL = "claude-opus-5-5";
+/** Override per run to compare models: MODEL=claude-sonnet-5-5 npm start */
+export const MODEL = process.env.MODEL || "claude-opus-5-5";
 export const MAX_TOKENS = 16000;
 export const MAX_TURNS = 20;
 

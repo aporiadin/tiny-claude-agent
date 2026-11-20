@@ -2,15 +2,26 @@ import Anthropic from "@anthropic-ai/sdk";
 import { MAX_TOKENS, MAX_TURNS, MODEL, SYSTEM_PROMPT } from "./config.ts";
 import { runTool, toolDefinitions } from "./tools/index.ts";
 import type { ToolInput } from "./tools/types.ts";
+import { UsageLog } from "./usage.ts";
 
 // Reads ANTHROPIC_API_KEY (or an `ant auth login` profile) from the environment.
 const client = new Anthropic();
 
 /** Run the agent loop on a task. Returns true if Claude finished on its own. */
 export async function runAgent(task: string): Promise<boolean> {
+  const usage = new UsageLog();
+  try {
+    return await loop(task, usage);
+  } finally {
+    usage.printSummary(MODEL);
+  }
+}
+
+async function loop(task: string, usage: UsageLog): Promise<boolean> {
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: task }];
 
   for (let turn = 1; turn <= MAX_TURNS; turn++) {
+    const started = performance.now();
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
@@ -22,6 +33,7 @@ export async function runAgent(task: string): Promise<boolean> {
     // Keep the full content (including thinking blocks) in the history.
     messages.push({ role: "assistant", content: response.content });
     printText(response);
+    usage.record(turn, response, performance.now() - started);
 
     switch (response.stop_reason) {
       case "tool_use":

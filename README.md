@@ -44,6 +44,30 @@ npm run typecheck
 
 The agent prints Claude's messages and each tool call (`[tool] read_file "calc.ts"`) as it works. It stops when Claude finishes, after 20 turns, or if a response is declined or cut off.
 
+## Watching the token usage
+
+After every request the agent prints one line, and at the end a table for the whole run:
+
+```
+[turn 2] tool_use (1 tool call) · in 1,342 · out 118 · 2.1s
+...
+── Usage: claude-opus-5-5 ──
+turn   stop             tools     input    output      time
+1      tool_use             1       812        95      1.9s
+...
+total  5 turns              4     7,040       930     11.4s
+```
+
+- **input** is the whole prompt sent on that turn (system prompt, tool definitions and the full history), so it grows every turn: the API keeps no state, and the agent resends everything.
+- **output** counts every token the model generated, including thinking it doesn't show. That's why it can be much larger than the text printed.
+
+To compare models, run the same task with a different `MODEL` (then `npm run reset` between runs):
+
+```bash
+MODEL=claude-sonnet-5-5 npm start
+MODEL=claude-haiku-5-5 npm start
+```
+
 ## How it works
 
 1. `agent.ts` sends the task to Claude along with four tool definitions.
