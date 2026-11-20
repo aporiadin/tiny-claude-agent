@@ -55,7 +55,11 @@ async function loop(task: string, usage: UsageLog): Promise<boolean> {
   return false;
 }
 
-/** Run every tool call in a response; all results go back in one user message. */
+/**
+ * Run every tool call in a response; all results go back in one user message.
+ * Calls run one at a time, in the order Claude listed them, so a write finishes
+ * before a test run that comes after it in the same response.
+ */
 async function runToolCalls(response: Anthropic.Message): Promise<Anthropic.ToolResultBlockParam[]> {
   const results: Anthropic.ToolResultBlockParam[] = [];
 

@@ -7,8 +7,9 @@ A minimal coding agent built on the Claude API. It reads a small TypeScript proj
 ```
 src/
 ├── index.ts        entry point: reads the task, starts the agent
-├── config.ts       model, limits, system prompt, default task
+├── config.ts       model, effort, limits, system prompt, default task
 ├── agent.ts        the loop: call Claude, run the tools it asks for, repeat
+├── usage.ts        per-turn token usage and the summary table
 └── tools/
     ├── index.ts      collects all tools, exports toolDefinitions + runTool()
     ├── types.ts      AgentTool = { definition, run }
@@ -46,20 +47,36 @@ The agent prints Claude's messages and each tool call (`[tool] read_file "calc.t
 
 ## Watching the token usage
 
-After every request the agent prints one line, and at the end a table for the whole run:
+After every request the agent prints one line, followed by the tools that request asked for. At the end it prints a table for the whole run. This is a real run of the default task:
 
 ```
-[turn 2] tool_use (1 tool call) · in 1,342 · out 118 · 2.1s
+[turn 1] tool_use (2 tool calls) · in 779 · out 50 · 1.8s
+[tool] list_files ""
+[tool] run_tests ""
+
+[turn 2] tool_use (2 tool calls) · in 1,323 · out 101 · 1.7s
+[tool] read_file "calc.ts"
+[tool] read_file "calc.test.ts"
+
+[turn 3] tool_use (2 tool calls) · in 1,571 · out 119 · 1.8s
+[tool] write_file "calc.ts"
+[tool] run_tests ""
+
+[turn 4] end_turn · in 1,855 · out 134 · 2.3s
+I fixed the failing test, and the suite now passes (1 of 1).
 ...
-── Usage: claude-opus-5-5 ──
+
+── Usage: claude-opus-5-5, effort medium ──
 turn   stop             tools     input    output      time
-1      tool_use             1       812        95      1.9s
-...
-total  5 turns              4     7,040       930     11.4s
+1      tool_use             2       779        50      1.8s
+2      tool_use             2     1,323       101      1.7s
+3      tool_use             2     1,571       119      1.8s
+4      end_turn             0     1,855       134      2.3s
+total  4 turns              6     5,528       404      7.6s
 ```
 
-- **input** is the whole prompt sent on that turn (system prompt, tool definitions and the full history), so it grows every turn: the API keeps no state, and the agent resends everything.
-- **output** counts every token the model generated, including thinking it doesn't show. That's why it can be much larger than the text printed.
+- **input** is the whole prompt sent on that turn (system prompt, tool definitions and the full history), so it grows every turn: the API keeps no state, and the agent resends everything. The conversation never passes ~1,900 tokens, but the run sends 5,528 in total.
+- **output** counts every token the model generated, including thinking it doesn't show, so it can be much larger than the printed text. Here it stays small: on an easy task at `medium` effort the model barely thinks.
 
 To compare models, run the same task with a different `MODEL` (then `npm run reset` between runs):
 
@@ -82,7 +99,9 @@ The same level isn't the same amount of thinking on every model: each model cali
 2. When Claude replies with `stop_reason: "tool_use"`, the agent runs each requested tool and sends all results back in one message.
 3. This repeats until Claude replies without asking for a tool.
 
-Tools can only touch files inside `workspace/`; any path that leads outside it is refused.
+**The model decides what to do; the harness decides how it happens.** One response can ask for several tools at once. Here they run one at a time, in the order Claude listed them. That's what makes turn 3 above work: `write_file` saves the fix before `run_tests` starts. Run them in parallel instead and the tests could see the old file and fail, and the model would have no way to know why. Real agents usually run read-only tools in parallel and anything that changes state one at a time.
+
+**This is not a sandbox.** The file tools refuse any path that leads outside `workspace/`, but `run_tests` runs whatever code is in `workspace/` with your user's permissions, and Claude can write that code. Run it only with tasks you're comfortable letting run on your machine.
 
 ## Resetting the demo
 
