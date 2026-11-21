@@ -93,6 +93,37 @@ EFFORT=high MODEL=claude-sonnet-5-5 npm start
 
 The same level isn't the same amount of thinking on every model: each model calibrates its own levels. Comparing at one setting shows how the models behave when you configure them identically, which is what you'd do in practice.
 
+## Seeing the raw payloads
+
+Each run also saves the exact request body the agent sends on every turn and the full response it gets back, one folder per run:
+
+```
+runs/2026-11-21T21-06-24_claude-opus-5-5_medium/
+├── turn-01-request.json    the body sent to the API on turn 1
+├── turn-01-response.json   the full response that came back
+├── turn-02-request.json
+└── ...
+```
+
+Things to point out when walking through them:
+
+- **Each request file contains the whole conversation so far.** The files get bigger every turn (about 2 KB on turn 1, 6 KB on turn 4), because the API keeps no state and the agent resends everything.
+- **A request is just `model`, `max_tokens`, `output_config`, `system`, `tools` and `messages`.** There is nothing else behind the scenes on the client side.
+- **Tool calls and results are linked by id.** A `tool_use` block in a response has an `id`, and the agent's next request answers it with a `tool_result` carrying the same `tool_use_id`.
+- **`usage` in each response** holds the token counts behind the table, including `output_tokens_details.thinking_tokens`, which shows how much of the output was hidden thinking.
+- **Thinking blocks look empty.** At higher effort, responses can contain `thinking` blocks with an empty `thinking` field and a long `signature`. That's expected: the model thinks, but its thinking text isn't returned by default. The agent sends the blocks back unchanged in the next request.
+- **This is the client side, not the model's literal input.** The API turns the request into the model's actual input on its side, including instructions it adds for tool use. That's why turn 1 costs about 790 input tokens for a fairly small file.
+
+To show what a single turn adds, compare two consecutive requests:
+
+```bash
+diff runs/<run>/turn-03-request.json runs/<run>/turn-04-request.json
+```
+
+The only difference is at the end of `messages`: the model's last response and the tool results that answer it. Everything before that is resent unchanged.
+
+Only the request body is saved, never the HTTP headers, so your API key isn't written to disk. Tool results can include local file paths (from test stack traces, for example), so check the files before sharing them. `runs/` is in `.gitignore`.
+
 ## How it works
 
 1. `agent.ts` sends the task to Claude along with four tool definitions.
