@@ -12,11 +12,16 @@ const client = new Anthropic();
 export async function runAgent(task: string): Promise<boolean> {
   const usage = new UsageLog();
   const transcript = new Transcript(MODEL, EFFORT);
+  let result = "stopped by an error";
   try {
-    return await loop(task, usage, transcript);
+    const finished = await loop(task, usage, transcript);
+    result = finished ? "finished" : "stopped before finishing";
+    return finished;
   } finally {
-    usage.printSummary(`${MODEL}, effort ${EFFORT}, tools: ${TOOLS.join(", ")}`);
-    console.log(`\nFull request/response payloads: ${transcript.dir}/`);
+    const summary = usage.summary(`${MODEL}, effort ${EFFORT}, tools: ${TOOLS.join(", ")}`);
+    console.log(`\n${summary}`);
+    transcript.saveSummary(`Task: ${task}\nResult: ${result}\n\n${summary}`);
+    console.log(`\nPayloads and summary saved to ${transcript.dir}/`);
   }
 }
 

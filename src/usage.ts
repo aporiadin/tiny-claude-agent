@@ -32,13 +32,18 @@ export class UsageLog {
     );
   }
 
-  printSummary(model: string): void {
-    if (this.turns.length === 0) return;
+  /** The usage table for the whole run: printed at the end and saved as summary.txt. */
+  summary(title: string): string {
+    const lines = [`── Usage: ${title} ──`];
+    if (this.turns.length === 0) {
+      lines.push("No requests completed.");
+      return lines.join("\n");
+    }
 
-    const row = (cells: string[]) =>
-      console.log(cells[0].padEnd(7) + cells[1].padEnd(12) + cells.slice(2).map((c) => c.padStart(10)).join(""));
+    const row = (cells: string[]) => {
+      lines.push(cells[0].padEnd(7) + cells[1].padEnd(12) + cells.slice(2).map((c) => c.padStart(10)).join(""));
+    };
 
-    console.log(`\n── Usage: ${model} ──`);
     row(["turn", "stop", "tools", "input", "output", "time"]);
     for (const t of this.turns) {
       row([String(t.turn), t.stopReason, String(t.toolCalls), fmt(t.inputTokens), fmt(t.outputTokens), secs(t.ms)]);
@@ -54,6 +59,7 @@ export class UsageLog {
       fmt(sum("outputTokens")),
       secs(sum("ms")),
     ]);
+    return lines.join("\n");
   }
 }
 
