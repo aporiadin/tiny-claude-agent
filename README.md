@@ -46,6 +46,31 @@ npm run typecheck
 
 The agent prints Claude's messages and each tool call (`[tool] read_file "calc.ts"`) as it works. It stops when Claude finishes, after 20 turns, or if a response is declined or cut off.
 
+## Settings
+
+Three environment variables change how the agent runs. Set them before `npm start`:
+
+| Variable | Default | Values |
+|---|---|---|
+| `MODEL` | `claude-opus-5-5` | any model ID, e.g. `claude-sonnet-5-5` or `claude-haiku-5-5` |
+| `EFFORT` | `medium` | `low`, `medium`, `high`, `xhigh` or `max` |
+| `TOOLS` | `list_files,read_file,write_file,run_tests` | a comma-separated list of those four tools and `bash` |
+
+```bash
+MODEL=claude-sonnet-5-5 npm start
+EFFORT=high npm start
+TOOLS=read_file,write_file,bash npm start
+MODEL=claude-haiku-5-5 EFFORT=low TOOLS=list_files,read_file,write_file,bash npm start
+```
+
+To change a default for every run, put the variable in `.env` next to your API key, e.g. `MODEL=claude-sonnet-5-5`. A value set on the command line still wins over `.env`. The startup line shows the settings in use:
+
+```
+  (model: claude-opus-5-5, effort: medium, tools: list_files, read_file, write_file, run_tests)
+```
+
+An invalid `EFFORT` or an unknown tool name in `TOOLS` stops the run with a message that lists the valid values. [Comparing models](#watching-the-token-usage) and [Comparing tool sets](#comparing-tool-sets) below explain what to look for when you change them.
+
 ## Watching the token usage
 
 After every request the agent prints one line, followed by the tools that request asked for. At the end it prints a table for the whole run. This is a real run of the default task:
