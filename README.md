@@ -141,15 +141,18 @@ What to watch for with `bash`:
 
 ## Seeing the raw payloads
 
-Each run also saves the exact request body the agent sends on every turn and the full response it gets back, one folder per run:
+Each run also saves the exact request body the agent sends on every turn and the full response it gets back, plus the usage table, one folder per run:
 
 ```
 runs/2026-11-21T21-06-24_claude-opus-5-5_medium/
+├── summary.txt             the task, how the run ended, and the usage table
 ├── turn-01-request.json    the body sent to the API on turn 1
 ├── turn-01-response.json   the full response that came back
 ├── turn-02-request.json
 └── ...
 ```
+
+`summary.txt` makes runs easy to compare later, for example `cat runs/*/summary.txt` after trying several models or tool sets. Its `Result` line is `finished`, `stopped before finishing` (turn limit, declined or cut-off response) or `stopped by an error`. The summary is saved even when a run ends with an error.
 
 Things to point out when walking through them:
 
