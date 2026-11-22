@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { WORKSPACE } from "../config.ts";
 import type { AgentTool } from "./types.ts";
+import { childEnv } from "./workspace.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -15,6 +16,7 @@ export const runTests: AgentTool = {
   async run() {
     try {
       const { stdout, stderr } = await execFileAsync("node", ["--test", WORKSPACE], {
+        env: childEnv(),
         timeout: 60_000,
       });
       return `PASSED\n${stdout}${stderr}`;

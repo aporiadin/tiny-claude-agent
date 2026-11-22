@@ -12,3 +12,12 @@ export function resolveInWorkspace(p: unknown): string {
   }
   return full;
 }
+
+/**
+ * Environment for commands the agent runs: everything except ANTHROPIC_* variables.
+ * Without this, a command like `env` would put your API key into a tool result, which is
+ * sent to the API and saved in runs/.
+ */
+export function childEnv(): NodeJS.ProcessEnv {
+  return Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("ANTHROPIC_")));
+}

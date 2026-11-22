@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { EFFORT, MAX_TOKENS, MAX_TURNS, MODEL, SYSTEM_PROMPT } from "./config.ts";
+import { EFFORT, MAX_TOKENS, MAX_TURNS, MODEL, SYSTEM_PROMPT, TOOLS } from "./config.ts";
 import { runTool, toolDefinitions } from "./tools/index.ts";
 import type { ToolInput } from "./tools/types.ts";
 import { Transcript } from "./transcript.ts";
@@ -15,7 +15,7 @@ export async function runAgent(task: string): Promise<boolean> {
   try {
     return await loop(task, usage, transcript);
   } finally {
-    usage.printSummary(`${MODEL}, effort ${EFFORT}`);
+    usage.printSummary(`${MODEL}, effort ${EFFORT}, tools: ${TOOLS.join(", ")}`);
     console.log(`\nFull request/response payloads: ${transcript.dir}/`);
   }
 }
@@ -75,7 +75,7 @@ async function runToolCalls(response: Anthropic.Message): Promise<Anthropic.Tool
     if (block.type !== "tool_use") continue;
 
     const input = block.input as ToolInput;
-    console.log(`[tool] ${block.name} ${JSON.stringify(input.path ?? "")}`);
+    console.log(`[tool] ${block.name} ${JSON.stringify(input.path ?? input.command ?? "")}`);
 
     try {
       const output = await runTool(block.name, input);
