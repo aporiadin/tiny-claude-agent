@@ -20,7 +20,16 @@ function parseEffort(value: string): Effort {
 export const MAX_TOKENS = 16000;
 export const MAX_TURNS = 20;
 
-/** The project the agent works on. Tools cannot touch anything outside it. */
+/**
+ * The tools Claude gets, by name. Swap tool sets to compare behaviour:
+ * TOOLS=list_files,read_file,write_file,bash npm start
+ */
+export const TOOLS = (process.env.TOOLS || "list_files,read_file,write_file,run_tests")
+  .split(",")
+  .map((name) => name.trim())
+  .filter(Boolean);
+
+/** The project the agent works on. The file tools cannot touch anything outside it; bash can. */
 export const WORKSPACE = path.resolve("workspace");
 
 export const SYSTEM_PROMPT =
